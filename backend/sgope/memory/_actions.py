@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from hyperhint.memory._types import Action, Suggestion
+from sgope.memory._types import Action, Suggestion
 
 
 class ActionHandler:
@@ -62,8 +62,8 @@ class ActionHandler:
             if action_id == "add_knowledge":
                 import asyncio
                 import re
-                from hyperhint.memory import knowledge_file_handler
-                from hyperhint.llm import llm_manager
+                from sgope.memory import knowledge_file_handler
+                from sgope.llm import llm_manager
 
                 attachments = kwargs.get("attachments", [])
                 knowledge_filename = kwargs.get("knowledge_filename")

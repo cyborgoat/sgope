@@ -7,8 +7,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
 # Import the LLM manager and memory
-from hyperhint.llm import llm_manager
-from hyperhint.memory import knowledge_file_handler
+from sgope.llm import llm_manager
+from sgope.memory import knowledge_file_handler
 
 sse_router = APIRouter()
 
@@ -30,7 +30,7 @@ async def generate_chat_stream(
         # Check if an action should be executed first
         if selected_action:
             # Import here to avoid circular imports
-            from hyperhint.memory import action_handler
+            from sgope.memory import action_handler
 
             # Send action execution start event
             yield f"data: {json.dumps({'type': 'action_start', 'action': selected_action, 'timestamp': datetime.now().isoformat()})}\n\n"

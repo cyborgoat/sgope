@@ -3,8 +3,8 @@ from typing import List
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from hyperhint.memory._actions import ActionHandler
-from hyperhint.memory._knowledge_files import KnowledgeFileHandler
+from sgope.memory._actions import ActionHandler
+from sgope.memory._knowledge_files import KnowledgeFileHandler
 
 websocket_router = APIRouter()
 

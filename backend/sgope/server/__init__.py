@@ -1,15 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from hyperhint.server.routes import router
-from hyperhint.server.sse import sse_router
-from hyperhint.server.websocket import websocket_router
+from sgope.server.routes import router
+from sgope.server.sse import sse_router
+from sgope.server.websocket import websocket_router
 
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application"""
     app = FastAPI(
-        title="HyperHint API",
+        title="sgope API",
         description="Real-time file and action suggestion API with SSE streaming",
         version="0.1.0"
     )

@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Dict, Any, List
 
-from hyperhint.llm import llm_manager
-from hyperhint.memory import action_handler, knowledge_file_handler
+from sgope.llm import llm_manager
+from sgope.memory import action_handler, knowledge_file_handler
 
 router = APIRouter()
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Quick start script for HyperHint backend development
+Quick start script for sgope backend development
 """
 
 import os
@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
 if __name__ == "__main__":
-    print("🚀 Starting HyperHint Backend Server...")
+    print("🚀 Starting sgope Backend Server...")
     print("📡 API will be available at: http://localhost:8000")
     print("📖 API docs will be available at: http://localhost:8000/docs")
     print("🔌 WebSocket endpoints:")
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     is_frozen = getattr(sys, 'frozen', False)
     
     uvicorn.run(
-        "hyperhint.main:app",
+        "sgope.main:app",
         host="0.0.0.0",
         port=8000,
         reload=not is_frozen,  # Set reload to False if frozen (PyInstaller executable)

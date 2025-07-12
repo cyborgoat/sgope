@@ -1,5 +1,5 @@
 [project]
-name = "hyperhint"
+name = "sgope"
 version = "0.1.0"
 description = "A short description of your project."
 authors = [{ name = "cyborgoat", email = "cyborgoat@outlook.com" }]
