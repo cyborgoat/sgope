@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 import { useLLMStore } from "@/lib/llmStore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,7 +96,7 @@ export default function LLMServiceConfig() {
 
   const fetchModels = useCallback(async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/models");
+      const response = await fetch(`${BACKEND_URL}/api/models`);
       if (response.ok) {
         const data = await response.json();
         setModels(data.all_models || []);
@@ -118,7 +120,7 @@ export default function LLMServiceConfig() {
 
   const fetchServices = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/services");
+      const response = await fetch(`${BACKEND_URL}/api/services`);
       if (response.ok) {
         const data = await response.json();
         setServices(data);
@@ -145,7 +147,7 @@ export default function LLMServiceConfig() {
       }
       
       setTestStatusMessage('Sending test request...');
-      const response = await fetch("http://localhost:8000/api/services/test", {
+      const response = await fetch(`${BACKEND_URL}/api/services/test`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -244,12 +246,12 @@ export default function LLMServiceConfig() {
       }
       
       if (editingServiceId) {
-        await fetch(`http://localhost:8000/api/services/${editingServiceId}`, {
+        await fetch(`${BACKEND_URL}/api/services/${editingServiceId}`, {
           method: "DELETE",
         });
       }
       
-      const response = await fetch("http://localhost:8000/api/services/add", {
+      const response = await fetch(`${BACKEND_URL}/api/services/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -311,7 +313,7 @@ export default function LLMServiceConfig() {
 
   const removeService = async (serviceId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/services/${serviceId}`, {
+      const response = await fetch(`${BACKEND_URL}/api/services/${serviceId}`, {
         method: "DELETE",
       });
       
@@ -326,7 +328,7 @@ export default function LLMServiceConfig() {
 
   const setDefaultModel = async (modelId: string) => {
     try {
-      const response = await fetch("http://localhost:8000/api/models/default", {
+      const response = await fetch(`${BACKEND_URL}/api/models/default`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -410,7 +412,6 @@ export default function LLMServiceConfig() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Circle className="h-5 w-5" />
               LLM Service Configuration
             </CardTitle>
             <CardDescription>

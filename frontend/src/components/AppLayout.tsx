@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import ModelSelector from "@/components/ModelSelector";
 import { 
   Home, 
@@ -63,8 +63,8 @@ function SidebarContent({ className, isCollapsed }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <div className={cn("flex flex-col h-screen", className)}>
-      <div className="flex h-14 items-center border-b px-4">
+    <div className={cn("flex flex-col h-screen min-h-0", className)}>
+      <div className="flex h-14 items-center border-b px-4 flex-shrink-0">
         <Link className="flex items-center gap-2 font-semibold" href="/">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             S
@@ -72,8 +72,9 @@ function SidebarContent({ className, isCollapsed }: SidebarProps) {
           {!isCollapsed && <span>Sgope</span>}
         </Link>
       </div>
-      <div className="flex-1 flex flex-col">
-        <nav className="grid gap-1 p-2">
+      {/* Main nav area is scrollable and flexible */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-y-auto">
+        <nav className="grid gap-1 p-2 flex-shrink-0">
           {navigation.map((item) => {
             const isActive = pathname === item.href || (pathname.startsWith(item.href) && item.href !== "/");
             return (
@@ -93,8 +94,8 @@ function SidebarContent({ className, isCollapsed }: SidebarProps) {
             );
           })}
         </nav>
-        <div className="mx-2 my-4 border-t" />
-        <nav className="grid gap-1 p-2">
+        <div className="mx-2 my-4 border-t flex-shrink-0" />
+        <nav className="grid gap-1 p-2 flex-shrink-0">
           {secondaryNavigation.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -114,10 +115,12 @@ function SidebarContent({ className, isCollapsed }: SidebarProps) {
             );
           })}
         </nav>
-        <div className="flex-1" />
-        {/* Model Selector at bottom of sidebar */}
-        <div className="border-t p-2">
-          <ModelSelector />
+        <div className="flex-1 min-h-0" />
+        {/* Responsive Model Selector at bottom of sidebar */}
+        <div className="border-t p-2 flex-shrink-0 flex items-center w-full">
+          <div className="w-full">
+            <ModelSelector />
+          </div>
         </div>
       </div>
     </div>
@@ -129,11 +132,31 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Always show sidebar for all pages, including chat
 
   return (
     <div className="grid h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+      {/* Mobile Sidebar */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden fixed top-3 right-3 z-50"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent className="w-[280px] p-0">
+          <VisuallyHidden>
+            <SheetTitle>Navigation Menu</SheetTitle>
+          </VisuallyHidden>
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
+
       {/* Sticky Desktop Sidebar (SSR-safe) */}
       <aside className="hidden md:flex flex-col sticky top-0 h-screen border-r bg-muted/40 z-30">
         <SidebarContent />

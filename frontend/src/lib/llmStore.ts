@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 
 interface ServiceInfo {
@@ -18,9 +19,29 @@ interface LLMState {
   setServices: (services: Record<string, ServiceInfo>) => void;
 }
 
-export const useLLMStore = create<LLMState>((set) => ({
-  selectedModel: '',
-  setSelectedModel: (model: string) => set({ selectedModel: model }),
+
+const SELECTED_MODEL_KEY = 'sgope.selectedModel';
+
+function getInitialSelectedModel() {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = window.localStorage.getItem(SELECTED_MODEL_KEY);
+      if (stored) return stored;
+    } catch {}
+  }
+  return '';
+}
+
+export const useLLMStore = create<LLMState>((set, get) => ({
+  selectedModel: getInitialSelectedModel(),
+  setSelectedModel: (model: string) => {
+    set({ selectedModel: model });
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(SELECTED_MODEL_KEY, model);
+      } catch {}
+    }
+  },
   services: {},
   setServices: (services: Record<string, ServiceInfo>) => set({ services }),
 }));

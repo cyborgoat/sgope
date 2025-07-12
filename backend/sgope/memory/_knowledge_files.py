@@ -19,7 +19,6 @@ class KnowledgeFileHandler:
         try:
             if not self.data_path.exists():
                 print(f"knowledge_files directory not found: {self.data_path}")
-                self._load_fallback_data()
                 return
 
             self._scan_directory(self.data_path)
@@ -27,7 +26,7 @@ class KnowledgeFileHandler:
 
         except Exception as e:
             print(f"Error loading knowledge_files: {e}")
-            self._load_fallback_data()
+            # No fallback, just leave memory empty
 
     def _scan_directory(self, path: Path, max_depth: int = 2, current_depth: int = 0):
         """Recursively scan directory for files"""
@@ -92,31 +91,7 @@ class KnowledgeFileHandler:
         except PermissionError:
             pass  # Skip directories we can't access
 
-    def _load_fallback_data(self):
-        """Load fallback mock data if directory scanning fails"""
-        mock_items = [
-            Memory(
-                type="file",
-                name="README.md",
-                file_path="./README.md",
-                size=2048,
-                metadata={"extension": ".md", "parent_dir": ".", "is_hidden": False},
-            ),
-            Memory(
-                type="file",
-                name="config.json",
-                file_path="./config.json",
-                size=1024,
-                metadata={"extension": ".json", "parent_dir": ".", "is_hidden": False},
-            ),
-            Memory(
-                type="folder",
-                name="docs",
-                folder_path="./docs",
-                metadata={"parent_dir": ".", "is_hidden": False},
-            ),
-        ]
-        self.memory.extend(mock_items)
+    # _load_fallback_data removed: no fallback logic, memory stays empty if no files
 
     def add_knowledge_file(self, filename: str, content: str) -> str:
         """Add a new knowledge file to knowledge_files"""

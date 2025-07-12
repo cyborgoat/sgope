@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import { useLLMStore } from "@/lib/llmStore";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import EnhancedInput from "@/components/EnhancedInput";
-import KnowledgeSidebar from "@/components/KnowledgeSidebar";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import MarkdownMessage from "@/components/MarkdownMessage";
 import { processMarkdownContent, accumulateStreamingContent } from "@/lib/textUtils";
@@ -103,6 +102,7 @@ export default function ChatInterface() {
       );
 
       // Connect to SSE endpoint
+      // Always send the model name as selected in Zustand (including any tags like :latest)
       const response = await fetch(`${BACKEND_URL}/api/chat/stream`, {
         method: "POST",
         headers: {
