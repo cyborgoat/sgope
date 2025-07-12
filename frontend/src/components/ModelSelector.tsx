@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useLLMStore } from "@/lib/llmStore";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -58,10 +59,7 @@ interface ServiceInfo {
     config: Record<string, string | boolean | string[]>;
 }
 
-interface ModelSelectorProps {
-    selectedModel: string;
-    onModelChange: (model: string) => void;
-}
+    // No props needed, use global store
 
 interface ServiceConfig {
     name: string;
@@ -71,12 +69,13 @@ interface ServiceConfig {
     models?: string[];
 }
 
-export default function ModelSelector({
-    selectedModel,
-    onModelChange,
-}: ModelSelectorProps) {
+// Use Zustand store for selectedModel and services
+export default function ModelSelector() {
+    const selectedModel = useLLMStore((state) => state.selectedModel);
+    const setSelectedModel = useLLMStore((state) => state.setSelectedModel);
+    const services = useLLMStore((state) => state.services);
+    const setServices = useLLMStore((state) => state.setServices);
     const [models, setModels] = useState<ModelInfo[]>([]);
-    const [services, setServices] = useState<Record<string, ServiceInfo>>({});
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     
@@ -123,7 +122,7 @@ export default function ModelSelector({
                     selectedModel &&
                     !data.all_models.find((m: ModelInfo) => m.id === selectedModel)
                 ) {
-                    onModelChange("");
+                    setSelectedModel("");
                 }
             } else {
                 console.error("Failed to fetch models");
@@ -133,7 +132,7 @@ export default function ModelSelector({
         } finally {
             setLoading(false);
         }
-    }, [selectedModel, onModelChange]);
+    }, [selectedModel, setSelectedModel]);
 
     const fetchServices = async () => {
         try {
@@ -573,7 +572,7 @@ export default function ModelSelector({
                         models.map((model) => (
                             <DropdownMenuItem
                                 key={`${model.id}-${model.name}-${model.provider}`}
-                                onClick={() => onModelChange(model.id)}
+                                onClick={() => setSelectedModel(model.id)}
                                 className="flex justify-between items-center py-3 cursor-pointer"
                             >
                                 <div className="flex items-center space-x-3">
@@ -613,19 +612,7 @@ export default function ModelSelector({
                                     {selectedModel === model.id && (
                                         <div className="w-2 h-2 rounded-full bg-primary" />
                                     )}
-                                    {!model.is_default && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-5 w-5 p-0"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setDefaultModel(model.id);
-                                            }}
-                                        >
-                                            <Star className="h-3 w-3" />
-                                        </Button>
-                                    )}
+                                    {/* Star icon for default model removed */}
                                 </div>
                             </DropdownMenuItem>
                         ))

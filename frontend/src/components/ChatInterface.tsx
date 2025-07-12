@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useLLMStore } from "@/lib/llmStore";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import EnhancedInput from "@/components/EnhancedInput";
-import ModelSelector from "@/components/ModelSelector";
 import KnowledgeSidebar from "@/components/KnowledgeSidebar";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import MarkdownMessage from "@/components/MarkdownMessage";
@@ -28,7 +28,8 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isActionActive, setIsActionActive] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("llama3.2");
+  // Remove local selectedModel state, use global store instead
+  const selectedModel = useLLMStore((state) => state.selectedModel);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const currentStreamRef = useRef<{ eventSource?: EventSource; streamId?: string } | null>(null);
 
@@ -325,29 +326,13 @@ export default function ChatInterface() {
   }, [messages, isLoading]);
 
   return (
-    <div className="flex overflow-hidden flex-col h-screen bg-background">
-      {/* Header with model selector */}
-      <div className="flex-shrink-0 border-b px-6 py-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                  <div className="flex justify-between items-center mx-auto max-w-4xl">
-            <div className="flex items-center space-x-1">
-              <KnowledgeSidebar />
-              <h1 className="text-lg font-semibold">sgope</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-            <ModelSelector
-              selectedModel={selectedModel}
-              onModelChange={setSelectedModel}
-            />
-          </div>
-        </div>
-      </div>
-
+    <div className="flex overflow-hidden flex-col h-full bg-background">
       {/* Main content area - this will take remaining height */}
       <div className="flex flex-col flex-1 min-h-0">
         {/* Messages area with proper ScrollArea */}
         <div className="flex-1 min-h-0">
           <ScrollArea className="h-full" ref={scrollAreaRef}>
-            <div className="px-4 py-6 mx-auto max-w-4xl">
+            <div className="px-3 py-4 mx-auto max-w-4xl">
               {messages.length === 0 ? (
                 <div className="py-12 text-center text-muted-foreground">
                   <div className="space-y-3">
@@ -483,7 +468,7 @@ export default function ChatInterface() {
 
         {/* Input area */}
         <div className="flex-shrink-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="p-4 mx-auto max-w-4xl">
+          <div className="p-3 mx-auto max-w-4xl">
             <EnhancedInput
               onSend={handleSendMessage}
               isLoading={isLoading}

@@ -13,63 +13,28 @@ load_dotenv()
 
 
 class ServiceConfig:
-    """Configuration for LLM services"""
-    def __init__(self, config_file: str = "llm_config.json"):
-        self.config_file = Path(config_file)
-        self.config = self._load_config()
-    
-    def _load_config(self) -> Dict[str, Any]:
-        """Load configuration from file"""
-        if self.config_file.exists():
-            try:
-                with open(self.config_file, 'r') as f:
-                    return json.load(f)
-            except Exception as e:
-                print(f"Error loading config: {e}")
-        
-        # Return clean slate - no defaults
-        return {
+    """In-memory configuration for LLM services (frontend is source of truth)"""
+    def __init__(self):
+        self.config = {
             "services": {},
             "default_model": None
         }
-    
-    def save_config(self):
-        """Save configuration to file"""
-        try:
-            with open(self.config_file, 'w') as f:
-                json.dump(self.config, f, indent=2)
-        except Exception as e:
-            print(f"Error saving config: {e}")
-    
     def add_service(self, service_id: str, service_type: str, config: Dict[str, Any]):
-        """Add or update a service configuration"""
         if "services" not in self.config:
             self.config["services"] = {}
-        
         self.config["services"][service_id] = {
             "type": service_type,
             "config": config,
             "enabled": True
         }
-        self.save_config()
-    
     def remove_service(self, service_id: str):
-        """Remove a service configuration"""
         if "services" in self.config and service_id in self.config["services"]:
             del self.config["services"][service_id]
-            self.save_config()
-    
     def get_services(self) -> Dict[str, Any]:
-        """Get all configured services"""
         return self.config.get("services", {})
-    
     def set_default_model(self, model: str):
-        """Set the default model"""
         self.config["default_model"] = model
-        self.save_config()
-    
     def get_default_model(self) -> Optional[str]:
-        """Get the default model"""
         return self.config.get("default_model")
 
 
@@ -129,49 +94,38 @@ class LLMManager:
                 self.model_mapping[clean_name] = service_id
     
     def add_service(self, service_id: str, service_type: str, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Add a new service configuration"""
-        try:
-            # Test the service configuration
-            if service_type == "ollama":
-                test_service = OllamaService(host=config["host"])
-                available = test_service.is_available()
-                models = test_service.list_models() if available else []
-            elif service_type == "openai":
-                test_service = OpenAIService(
-                    api_key=config.get("api_key"),
-                    base_url=config.get("base_url")
-                )
-                available = test_service.is_available()
-                models = config.get("models", [])  # For OpenAI, models are manually configured
-            else:
-                return {"success": False, "error": f"Unknown service type: {service_type}"}
-            
-            # Save configuration
-            self.service_config.add_service(service_id, service_type, config)
-            
-            # Re-initialize services
-            self._initialize_services()
-            self._update_model_mapping()
-            
-            return {
-                "success": True,
-                "service_id": service_id,
-                "available": available,
-                "models": models
-            }
-            
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+        """Add a new service configuration (stateless, frontend is source of truth)"""
+        # Test the service configuration
+        if service_type == "ollama":
+            test_service = OllamaService(host=config["host"])
+            available = test_service.is_available()
+            models = test_service.list_models() if available else []
+        elif service_type == "openai":
+            test_service = OpenAIService(
+                api_key=config.get("api_key"),
+                base_url=config.get("base_url")
+            )
+            available = test_service.is_available()
+            models = config.get("models", [])  # For OpenAI, models are manually configured
+        else:
+            return {"success": False, "error": f"Unknown service type: {service_type}"}
+        # Save configuration in memory only
+        self.service_config.add_service(service_id, service_type, config)
+        self._initialize_services()
+        self._update_model_mapping()
+        return {
+            "success": True,
+            "service_id": service_id,
+            "available": available,
+            "models": models
+        }
     
     def remove_service(self, service_id: str) -> Dict[str, Any]:
-        """Remove a service configuration"""
-        try:
-            self.service_config.remove_service(service_id)
-            self._initialize_services()
-            self._update_model_mapping()
-            return {"success": True}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+        """Remove a service configuration (stateless, frontend is source of truth)"""
+        self.service_config.remove_service(service_id)
+        self._initialize_services()
+        self._update_model_mapping()
+        return {"success": True}
     
     def test_service(self, service_type: str, config: Dict[str, Any]) -> Dict[str, Any]:
         """Test a service configuration without saving it"""
@@ -404,15 +358,12 @@ class LLMManager:
         }
     
     def set_default_model(self, model: str) -> Dict[str, Any]:
-        """Set the default model"""
-        try:
-            if self.is_model_available(model):
-                self.service_config.set_default_model(model)
-                return {"success": True, "default_model": model}
-            else:
-                return {"success": False, "error": f"Model '{model}' is not available"}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+        """Set the default model (stateless, frontend is source of truth)"""
+        if self.is_model_available(model):
+            self.service_config.set_default_model(model)
+            return {"success": True, "default_model": model}
+        else:
+            return {"success": False, "error": f"Model '{model}' is not available"}
 
 
 # Global LLM manager instance
