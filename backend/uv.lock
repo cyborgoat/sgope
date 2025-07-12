@@ -432,6 +432,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
     { name = "fastapi" },
+    { name = "httpx" },
     { name = "ollama" },
     { name = "openai" },
     { name = "pydantic" },
@@ -452,6 +453,7 @@ dev = [
 requires-dist = [
     { name = "aiofiles", specifier = ">=24.1.0" },
     { name = "fastapi", specifier = ">=0.115.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "isort", marker = "extra == 'dev'", specifier = "==6.0.1" },
     { name = "ollama", specifier = ">=0.5.1" },
     { name = "openai", specifier = ">=1.90.0" },

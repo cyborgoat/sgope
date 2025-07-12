@@ -572,7 +572,7 @@ export default function ModelSelector({
                     ) : (
                         models.map((model) => (
                             <DropdownMenuItem
-                                key={model.id}
+                                key={`${model.id}-${model.name}-${model.provider}`}
                                 onClick={() => onModelChange(model.id)}
                                 className="flex justify-between items-center py-3 cursor-pointer"
                             >
