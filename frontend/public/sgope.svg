@@ -1,0 +1,6 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Transparent padding: 99px on all sides, visible area 826x826 centered -->
+  <rect width="1024" height="1024" fill="none"/>
+  <rect x="99" y="99" width="826" height="826" rx="206" fill="#18181b"/>
+  <text x="512" y="670" text-anchor="middle" font-size="520" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-weight="bold">S</text>
+</svg>
