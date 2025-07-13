@@ -117,6 +117,7 @@ export default function ModelSelector() {
   const [refreshingServices, setRefreshingServices] = useState<Set<string>>(
     new Set()
   );
+  const [deletingServices, setDeletingServices] = useState<Set<string>>(new Set());
 
   // OpenAI models raw input for comma handling
   const [openaiModelsInput, setOpenaiModels] = useState<string>("");
@@ -452,7 +453,9 @@ export default function ModelSelector() {
     setConfigDialogOpen(true);
   };
 
+
   const removeService = async (serviceId: string) => {
+    setDeletingServices((prev) => new Set(prev).add(serviceId));
     try {
       const response = await fetch(`${BACKEND_URL}/api/services/${serviceId}`, {
         method: "DELETE",
@@ -464,6 +467,12 @@ export default function ModelSelector() {
       }
     } catch (error) {
       console.error("Error removing service:", error);
+    } finally {
+      setDeletingServices((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(serviceId);
+        return newSet;
+      });
     }
   };
 
@@ -492,10 +501,13 @@ export default function ModelSelector() {
     setSelectedModels(newSelected);
   };
 
+
+  // Only fetch models/services on mount, not after every fetchModels change
   useEffect(() => {
     fetchModels();
     fetchServices();
-  }, [fetchModels]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const currentModel = models.find((m) => m.id === selectedModel);
 
@@ -721,8 +733,13 @@ export default function ModelSelector() {
                               onClick={() => removeService(service.id)}
                               className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
                               title="Remove service"
+                              disabled={deletingServices.has(service.id)}
                             >
-                              <Trash2 className="h-3 w-3" />
+                              {deletingServices.has(service.id) ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3 w-3" />
+                              )}
                             </Button>
                           </div>
                         </div>

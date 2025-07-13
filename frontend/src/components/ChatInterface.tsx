@@ -6,9 +6,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import EnhancedInput from "@/components/EnhancedInput";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
 import MarkdownMessage from "@/components/MarkdownMessage";
-import { processMarkdownContent, accumulateStreamingContent } from "@/lib/textUtils";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+import {
+  processMarkdownContent,
+  accumulateStreamingContent,
+} from "@/lib/textUtils";
+import { streamChat, stopChatStream } from "@/lib/api/chat";
 
 interface Message {
   id: string;
@@ -30,7 +33,10 @@ export default function ChatInterface() {
   // Remove local selectedModel state, use global store instead
   const selectedModel = useLLMStore((state) => state.selectedModel);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const currentStreamRef = useRef<{ eventSource?: EventSource; streamId?: string } | null>(null);
+  const currentStreamRef = useRef<{
+    eventSource?: EventSource;
+    streamId?: string;
+  } | null>(null);
 
   const handleSendMessage = async (
     content: string,
@@ -41,7 +47,12 @@ export default function ChatInterface() {
     setIsActionActive(!!selectedAction);
 
     // Allow sending if there's content, attachments, or a selected action
-    if (!content.trim() && (!attachments || attachments.length === 0) && !selectedAction) return;
+    if (
+      !content.trim() &&
+      (!attachments || attachments.length === 0) &&
+      !selectedAction
+    )
+      return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -55,8 +66,10 @@ export default function ChatInterface() {
     setIsLoading(true);
 
     // Generate unique stream ID
-    const streamId = `stream_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+    const streamId = `stream_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+
     // Create assistant message that will be updated with streaming content
     const assistantMessageId = (Date.now() + 1).toString();
     const assistantMessage: Message = {
@@ -73,7 +86,7 @@ export default function ChatInterface() {
       // Prepare attachments with file content for backend
       const processedAttachments = await Promise.all(
         (attachments || []).map(async (attachment) => {
-          if (attachment.type === 'file' && attachment.url) {
+          if (attachment.type === "file" && attachment.url) {
             try {
               // Fetch file content if it's an uploaded file
               const response = await fetch(attachment.url);
@@ -82,15 +95,15 @@ export default function ChatInterface() {
                 type: attachment.type,
                 name: attachment.name,
                 content: content,
-                size: content.length
+                size: content.length,
               };
             } catch (error) {
-              console.error('Error reading file content:', error);
+              console.error("Error reading file content:", error);
               return {
                 type: attachment.type,
                 name: attachment.name,
-                content: '',
-                size: 0
+                content: "",
+                size: 0,
               };
             }
           }
@@ -101,21 +114,14 @@ export default function ChatInterface() {
         })
       );
 
-      // Connect to SSE endpoint
-      // Always send the model name as selected in Zustand (including any tags like :latest)
-      const response = await fetch(`${BACKEND_URL}/api/chat/stream`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: content,
-          attachments: processedAttachments,
-          model: selectedModel,
-          stream_id: streamId,
-          selected_action: selectedAction,
-          knowledge_filename: options?.knowledgeFilename,
-        }),
+      // Use centralized API logic
+      const response = await streamChat({
+        content,
+        attachments: processedAttachments,
+        selectedModel,
+        streamId,
+        selectedAction,
+        knowledgeFilename: options?.knowledgeFilename,
       });
 
       if (!response.ok) {
@@ -139,27 +145,27 @@ export default function ChatInterface() {
 
       while (true) {
         const { done, value } = await reader.read();
-        
+
         if (done) {
           break;
         }
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
+        const lines = buffer.split("\n");
         buffer = lines.pop() || ""; // Keep incomplete line in buffer
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.slice(6));
-              
+
               switch (data.type) {
-                case 'start':
-                  console.log('Stream started:', data.timestamp);
+                case "start":
+                  console.log("Stream started:", data.timestamp);
                   break;
-                  
-                case 'action_start':
-                  console.log('Action started:', data.action, data.timestamp);
+
+                case "action_start":
+                  console.log("Action started:", data.action, data.timestamp);
                   // Show action execution indicator
                   assistantContent = `🔄 Executing action: ${data.action}...`;
                   setMessages((prev) =>
@@ -170,9 +176,9 @@ export default function ChatInterface() {
                     )
                   );
                   break;
-                  
-                case 'action_complete':
-                  console.log('Action completed:', data.action, data.result);
+
+                case "action_complete":
+                  console.log("Action completed:", data.action, data.result);
                   setIsActionActive(false); // Reset action state
                   // Clear the action indicator
                   assistantContent = "";
@@ -184,8 +190,8 @@ export default function ChatInterface() {
                     )
                   );
                   break;
-                  
-                case 'content':
+
+                case "content":
                   let newContent = data.content;
 
                   if (newContent.includes("<think>")) {
@@ -202,30 +208,40 @@ export default function ChatInterface() {
                     thinkingProcessContent += newContent; // Accumulate thinking content
                   } else {
                     // Turn off loading state on first content chunk
-                    if (assistantContent === "" || assistantContent.startsWith("🔄")) {
+                    if (
+                      assistantContent === "" ||
+                      assistantContent.startsWith("🔄")
+                    ) {
                       setIsLoading(false);
                     }
-                    assistantContent = accumulateStreamingContent(assistantContent, newContent);
+                    assistantContent = accumulateStreamingContent(
+                      assistantContent,
+                      newContent
+                    );
                   }
 
                   setMessages((prev) =>
                     prev.map((msg) =>
                       msg.id === assistantMessageId
-                        ? { ...msg, content: assistantContent, thinkingProcess: thinkingProcessContent }
+                        ? {
+                            ...msg,
+                            content: assistantContent,
+                            thinkingProcess: thinkingProcessContent,
+                          }
                         : msg
                     )
                   );
                   break;
-                  
-                case 'complete':
-                  console.log('Stream completed:', data.timestamp);
+
+                case "complete":
+                  console.log("Stream completed:", data.timestamp);
                   setIsLoading(false);
                   setIsActionActive(false); // Also reset here
                   currentStreamRef.current = null;
                   break;
-                  
-                case 'cancelled':
-                  console.log('Stream cancelled:', data.message);
+
+                case "cancelled":
+                  console.log("Stream cancelled:", data.message);
                   setIsLoading(false);
                   setIsActionActive(false); // And here
                   currentStreamRef.current = null;
@@ -238,16 +254,23 @@ export default function ChatInterface() {
                   };
                   setMessages((prev) => [...prev, cancelMessage]);
                   break;
-                  
-                case 'error':
-                  console.error('Stream error:', data.message);
+
+                case "error":
                   setIsLoading(false);
-                  setIsActionActive(false); // And here
+                  setIsActionActive(false);
                   currentStreamRef.current = null;
+                  let errorMsg = data.message;
+                  if (
+                    typeof errorMsg === "string" &&
+                    errorMsg.includes("Model '' not available")
+                  ) {
+                    errorMsg =
+                      "No model is selected or available. Please select a model in the settings.";
+                  }
                   // Add error message
                   const errorMessage: Message = {
                     id: Date.now().toString(),
-                    content: `Error: ${data.message}`,
+                    content: `Error: ${errorMsg}`,
                     role: "system",
                     timestamp: new Date(),
                   };
@@ -255,21 +278,23 @@ export default function ChatInterface() {
                   break;
               }
             } catch (e) {
-              console.error('Error parsing SSE data:', e);
+              console.error("Error parsing SSE data:", e);
             }
           }
         }
       }
     } catch (error) {
-      console.error('SSE connection error:', error);
+      console.error("SSE connection error:", error);
       setIsLoading(false);
       setIsActionActive(false); // And finally, here
       currentStreamRef.current = null;
-      
+
       // Add error message to chat
       const errorMessage: Message = {
         id: Date.now().toString(),
-        content: `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}. Falling back to mock response.`,
+        content: `Connection error: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }. Falling back to mock response.`,
         role: "system",
         timestamp: new Date(),
       };
@@ -295,18 +320,9 @@ export default function ChatInterface() {
   const handleStopGeneration = async () => {
     if (currentStreamRef.current?.streamId) {
       try {
-        // Send stop request to backend
-        await fetch(`${BACKEND_URL}/api/chat/stop`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            stream_id: currentStreamRef.current.streamId,
-          }),
-        });
+        await stopChatStream(currentStreamRef.current.streamId);
       } catch (error) {
-        console.error('Error stopping stream:', error);
+        console.error("Error stopping stream:", error);
       }
     }
 
@@ -406,7 +422,9 @@ export default function ChatInterface() {
                               : "bg-muted"
                           }`}
                         >
-                          {message.role === "assistant" && !message.content && isLoading ? (
+                          {message.role === "assistant" &&
+                          !message.content &&
+                          isLoading ? (
                             // Show processing dots only for empty assistant messages during loading
                             <div className="flex space-x-1">
                               <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
@@ -420,8 +438,8 @@ export default function ChatInterface() {
                               ></div>
                             </div>
                           ) : message.role === "assistant" ? (
-                            <MarkdownMessage 
-                              content={processMarkdownContent(message.content)} 
+                            <MarkdownMessage
+                              content={processMarkdownContent(message.content)}
                               className="text-sm"
                             />
                           ) : (
@@ -431,8 +449,12 @@ export default function ChatInterface() {
                           )}
                           {message.thinkingProcess && ( // Display thinking process if available
                             <div className="pt-2 mt-2 text-xs italic border-t border-muted/50 text-muted-foreground">
-                              <p className="mb-1 font-semibold">Thinking Process:</p>
-                              <MarkdownMessage content={message.thinkingProcess} />
+                              <p className="mb-1 font-semibold">
+                                Thinking Process:
+                              </p>
+                              <MarkdownMessage
+                                content={message.thinkingProcess}
+                              />
                             </div>
                           )}
                         </div>

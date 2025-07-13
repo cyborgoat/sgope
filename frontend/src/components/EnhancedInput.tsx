@@ -45,23 +45,22 @@ interface AttachmentItem {
   url?: string
 }
 
-// Fetch suggestions from API
+// Fetch suggestions from backend using client-side API fetchers
+import { fetchFiles } from '@/lib/api/files';
+import { fetchActions } from '@/lib/api/actions';
+
 const fetchSuggestions = async (
   type: "@" | "/",
   query: string
 ): Promise<SuggestionItem[]> => {
   try {
-    const endpoint = type === "@" ? "/api/files" : "/api/actions";
-    const response = await fetch(`${endpoint}?q=${encodeURIComponent(query)}`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (type === "@") {
+      const data = await fetchFiles(query);
+      return Array.isArray(data) ? data : [];
+    } else {
+      const data = await fetchActions(query);
+      return Array.isArray(data) ? data : [];
     }
-    
-    const data = await response.json();
-    
-    // The backend returns the array directly, not wrapped in an object
-    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error("Error fetching suggestions:", error);
     return [];

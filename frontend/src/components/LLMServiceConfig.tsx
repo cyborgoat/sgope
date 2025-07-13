@@ -382,7 +382,8 @@ export default function LLMServiceConfig() {
   useEffect(() => {
     fetchModels();
     fetchServices();
-  }, [fetchModels, fetchServices]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) {
     return (

@@ -16,6 +16,28 @@ sgope is a modern AI-powered chat application with a Next.js frontend and a Pyth
    ```
 2. See `frontend/README.md` and `backend/README.md` for setup and usage instructions for each part.
 
+## Building the App
+
+To build the full desktop app (Next.js + Tauri):
+
+1. Install dependencies:
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+2. Build the Next.js frontend:
+   ```bash
+   npm run build
+   ```
+
+3. Build the Tauri desktop app:
+   ```bash
+   npx tauri build
+   ```
+
+The final Tauri app will be in `frontend/src-tauri/target/release/`.
+
 ## Features
 
 - Real-time chat with streaming responses
