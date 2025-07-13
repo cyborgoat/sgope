@@ -14,16 +14,21 @@ interface SuggestionItem {
   description?: string;
 }
 
-// Fetch suggestions from API
+import { fetchFiles } from '@/lib/api/files';
+import { fetchActions } from '@/lib/api/actions';
+
 const fetchSuggestions = async (
   type: "@" | "/",
   query: string
 ): Promise<SuggestionItem[]> => {
   try {
-    const endpoint = type === "@" ? "/api/files" : "/api/actions";
-    const response = await fetch(`${endpoint}?q=${encodeURIComponent(query)}`);
-    const data = await response.json();
-    return type === "@" ? data.files : data.actions;
+    if (type === "@") {
+      const data = await fetchFiles(query);
+      return Array.isArray(data) ? data : [];
+    } else {
+      const data = await fetchActions(query);
+      return Array.isArray(data) ? data : [];
+    }
   } catch (error) {
     console.error("Error fetching suggestions:", error);
     return [];

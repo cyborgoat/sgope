@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { fetchKnowledgeFiles, fetchKnowledgeFileContent } from "@/lib/api/knowledge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,7 +16,6 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 interface FileItem {
   id: string;
@@ -54,24 +54,16 @@ export function KnowledgeBaseCard() {
   const fetchKnowledgeData = async () => {
     try {
       setIsLoading(true);
-      
-      // Fetch files list
-      const response = await fetch(`${BACKEND_URL}/api/memory/files`);
-      if (response.ok) {
-        const data = await response.json();
-        const filesList = data.files || [];
-        setFiles(filesList);
-        
-        // Calculate stats
-        const stats = filesList.reduce((acc: KnowledgeStats, file: FileItem) => {
-          if (file.type === 'file') acc.total_files++;
-          else if (file.type === 'folder' || file.type === 'directory') acc.total_folders++;
-          else if (file.type === 'image') acc.total_images++;
-          return acc;
-        }, { total_files: 0, total_folders: 0, total_images: 0, recent_uploads: 0 });
-        
-        setStats(stats);
-      }
+      const data = await fetchKnowledgeFiles();
+      const filesList = data.files || [];
+      setFiles(filesList);
+      const stats = filesList.reduce((acc: KnowledgeStats, file: FileItem) => {
+        if (file.type === 'file') acc.total_files++;
+        else if (file.type === 'folder' || file.type === 'directory') acc.total_folders++;
+        else if (file.type === 'image') acc.total_images++;
+        return acc;
+      }, { total_files: 0, total_folders: 0, total_images: 0, recent_uploads: 0 });
+      setStats(stats);
     } catch (error) {
       console.error("Error fetching knowledge data:", error);
     } finally {
@@ -79,18 +71,12 @@ export function KnowledgeBaseCard() {
     }
   };
 
-  const viewFile = async (fileId: string, fileName: string) => {
+  const viewFile = async (filePath: string, fileName: string) => {
     setSelectedFile(fileName);
     setIsLoadingContent(true);
-    
     try {
-      const response = await fetch(`${BACKEND_URL}/api/memory/files/${fileId}/content`);
-      if (response.ok) {
-        const data = await response.json();
-        setFileContent(data.content || 'No content available');
-      } else {
-        setFileContent('Error loading file content');
-      }
+      const data = await fetchKnowledgeFileContent(filePath);
+      setFileContent(data.content || 'No content available');
     } catch (error) {
       console.error("Error fetching file content:", error);
       setFileContent('Error loading file content');

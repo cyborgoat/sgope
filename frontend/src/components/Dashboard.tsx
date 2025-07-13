@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { fetchStats } from '@/lib/api/stats';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-// import { ScrollArea } from "@/components/ui/scroll-area";
-// import { Separator } from "@/components/ui/separator";
 import { 
   Activity, 
   Brain, 
@@ -18,7 +16,6 @@ import { LLMServiceCard } from "./dashboard/LLMServiceCard";
 import { TodoCard } from "./dashboard/TodoCard";
 import { RecentActivityCard } from "./dashboard/RecentActivityCard";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 interface DashboardStats {
   knowledge_files: number;
@@ -47,19 +44,13 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      
-      // Fetch system stats
-      const statsResponse = await fetch(`${BACKEND_URL}/api/system/stats`);
-      if (statsResponse.ok) {
-        const data = await statsResponse.json();
-        setStats({
-          knowledge_files: data.short_term_memory?.files || 0,
-          total_actions: data.long_term_memory?.total_actions || 0,
-          active_models: data.llm_services?.all_models?.length || 0,
-          recent_chats: 5 // Placeholder - you can implement this endpoint
-        });
-      }
-
+      const data = await fetchStats();
+      setStats({
+        knowledge_files: data.short_term_memory?.files || 0,
+        total_actions: data.long_term_memory?.total_actions || 0,
+        active_models: data.llm_services?.all_models?.length || 0,
+        recent_chats: 5 // Placeholder - you can implement this endpoint
+      });
       // Generate some mock recent activity
       const mockActivity: RecentActivity[] = [
         {
@@ -82,7 +73,6 @@ export default function Dashboard() {
         }
       ];
       setRecentActivity(mockActivity);
-      
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {

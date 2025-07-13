@@ -16,3 +16,15 @@ export async function fetchFiles(query: string = '') {
     return null;
   }
 }
+
+export async function generateFilename(previews: string) {
+  const response = await fetch(`${BACKEND_URL}/api/generate-filename`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ previews }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to generate filename from backend.');
+  }
+  return response;
+}

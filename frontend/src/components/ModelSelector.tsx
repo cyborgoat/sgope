@@ -118,6 +118,8 @@ export default function ModelSelector() {
     new Set()
   );
   const [deletingServices, setDeletingServices] = useState<Set<string>>(new Set());
+  // Add processing state for add/edit service
+  const [savingService, setSavingService] = useState(false);
 
   // OpenAI models raw input for comma handling
   const [openaiModelsInput, setOpenaiModels] = useState<string>("");
@@ -301,29 +303,21 @@ export default function ModelSelector() {
   };
 
   const addService = async () => {
+    setSavingService(true);
+    // Force a re-render to show the spinner before the async operation
+    await new Promise(resolve => setTimeout(resolve, 0)); 
     try {
       const serviceId =
         editingServiceId || `${selectedServiceType}_${Date.now()}`;
       const config: Record<string, string | string[]> = {
         ...serviceConfig,
-        models: Array.from(selectedModels), // Only include selected models
+        models: Array.from(selectedModels),
       };
-
-      // If OpenAI, ensure models in config are from the raw input initially
-      if (selectedServiceType === "openai" && openaiModelsInput) {
-        config.models = openaiModelsInput
-          .split(",")
-          .map((m) => m.trim())
-          .filter(Boolean);
-      }
-
-      // If editing, remove the old service first
       if (editingServiceId) {
         await fetch(`${BACKEND_URL}/api/services/${editingServiceId}`, {
           method: "DELETE",
         });
       }
-
       const response = await fetch(`${BACKEND_URL}/api/services/add`, {
         method: "POST",
         headers: {
@@ -335,14 +329,17 @@ export default function ModelSelector() {
           config: config,
         }),
       });
-
       const result = await response.json();
-
       if (result.success) {
         setConfigDialogOpen(false);
         resetConfigForm();
-        await fetchModels();
-        await fetchServices();
+        // Immediately refresh services and models for UI update
+        const [servicesData, modelsData] = await Promise.all([
+          import('@/lib/api/llm').then(mod => mod.fetchServices()),
+          import('@/lib/api/llm').then(mod => mod.fetchModels())
+        ]);
+        setServices(servicesData);
+        setModels(modelsData.all_models || []);
       } else {
         setTestResult({
           success: false,
@@ -354,6 +351,8 @@ export default function ModelSelector() {
         success: false,
         message: `Error saving service: ${error}`,
       });
+    } finally {
+      setSavingService(false);
     }
   };
 
@@ -460,10 +459,14 @@ export default function ModelSelector() {
       const response = await fetch(`${BACKEND_URL}/api/services/${serviceId}`, {
         method: "DELETE",
       });
-
       if (response.ok) {
-        await fetchModels();
-        await fetchServices();
+        // Immediately refresh services and models for UI update
+        const [servicesData, modelsData] = await Promise.all([
+          import('@/lib/api/llm').then(mod => mod.fetchServices()),
+          import('@/lib/api/llm').then(mod => mod.fetchModels())
+        ]);
+        setServices(servicesData);
+        setModels(modelsData.all_models || []);
       }
     } catch (error) {
       console.error("Error removing service:", error);
@@ -1006,19 +1009,25 @@ export default function ModelSelector() {
 
                   {/* Add/Edit Service */}
                   <Button
+                    key={savingService ? "saving" : editingServiceId ? "editing" : "add"}
                     onClick={addService}
-                    disabled={!testResult.success || selectedModels.size === 0}
+                    disabled={!testResult.success || selectedModels.size === 0 || savingService}
                     className="w-full"
                   >
-                    {editingServiceId ? (
+                    {savingService ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <span>{editingServiceId ? "Updating Service..." : "Adding Service..."}</span>
+                      </>
+                    ) : editingServiceId ? (
                       <>
                         <Edit className="mr-2 h-4 w-4" />
-                        Update Service ({selectedModels.size} models)
+                        <span>Update Service ({selectedModels.size} models)</span>
                       </>
                     ) : (
                       <>
                         <Plus className="mr-2 h-4 w-4" />
-                        Add Service ({selectedModels.size} models)
+                        <span>Add Service ({selectedModels.size} models)</span>
                       </>
                     )}
                   </Button>

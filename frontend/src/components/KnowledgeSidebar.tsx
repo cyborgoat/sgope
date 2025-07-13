@@ -18,7 +18,10 @@ import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/pris
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+import { fetchKnowledgeFiles, fetchKnowledgeFileContent, saveKnowledgeFileContent } from '@/lib/api/knowledge';
+import { fetchStats, refreshKnowledge as apiRefreshKnowledge } from '@/lib/api/stats';
+import { fetchServices } from '@/lib/api/llm';
 
 interface FileItem {
   id: string;
@@ -139,38 +142,29 @@ export default function KnowledgeSidebar() {
 
   const fetchFiles = useCallback(async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/files`);
-      if (response.ok) {
-        const data = await response.json();
-        const fileList = Array.isArray(data) ? data : [];
-        setFileTree(buildFileTree(fileList));
-      }
+      const data = await fetchKnowledgeFiles();
+      const fileList = Array.isArray(data) ? data : [];
+      setFileTree(buildFileTree(fileList));
     } catch (error) {
       console.error('Failed to fetch files:', error);
       setFileTree([]);
     }
   }, []);
 
-  const fetchStats = useCallback(async () => {
+  const fetchStatsCb = useCallback(async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/stats`);
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
+      const data = await fetchStats();
+      setStats(data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
       setStats(null);
     }
   }, []);
 
-  const fetchServices = useCallback(async () => {
+  const fetchServicesCb = useCallback(async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/services`);
-      if (response.ok) {
-        const data = await response.json();
-        setServices(data);
-      }
+      const data = await fetchServices();
+      setServices(data);
     } catch (error) {
       console.error('Failed to fetch services:', error);
       setServices({});
@@ -182,18 +176,11 @@ export default function KnowledgeSidebar() {
     setSelectedFilePath(filePath);
     setIsLoadingContent(true);
     setIsEditing(false);
-
     try {
-      const response = await fetch(`${BACKEND_URL}/api/files/content?path=${encodeURIComponent(filePath)}`);
-      if (response.ok) {
-        const rawContent = await response.text();
-        const parsedContent = parseFileContent(rawContent);
-        setFileContent(parsedContent);
-        setEditedFileContent(parsedContent);
-      } else {
-        setFileContent('Error loading file content');
-        setEditedFileContent('Error loading file content');
-      }
+      const data = await fetchKnowledgeFileContent(filePath);
+      const parsedContent = parseFileContent(data.content || '');
+      setFileContent(parsedContent);
+      setEditedFileContent(parsedContent);
     } catch (error) {
       console.error('Error fetching file content:', error);
       setFileContent('Error loading file content');
@@ -207,25 +194,10 @@ export default function KnowledgeSidebar() {
     if (!selectedFilePath) return;
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/files/content`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          path: selectedFilePath,
-          content: editedFileContent,
-        }),
-      });
-
-      if (response.ok) {
-        setFileContent(editedFileContent);
-        setIsEditing(false);
-        alert('File saved successfully!');
-      } else {
-        alert('Failed to save file.');
-        console.error('Failed to save file:', response.statusText);
-      }
+      await saveKnowledgeFileContent(selectedFilePath, editedFileContent);
+      setFileContent(editedFileContent);
+      setIsEditing(false);
+      alert('File saved successfully!');
     } catch (error) {
       alert('Error saving file.');
       console.error('Error saving file:', error);
@@ -268,8 +240,8 @@ export default function KnowledgeSidebar() {
   const refreshKnowledge = async () => {
     setIsRefreshing(true);
     try {
-      await fetch(`${BACKEND_URL}/api/refresh`, { method: 'POST' });
-      await Promise.all([fetchFiles(), fetchStats()]);
+      await apiRefreshKnowledge();
+      await Promise.all([fetchFiles(), fetchStatsCb()]);
     } catch (error) {
       console.error('Failed to refresh knowledge:', error);
     } finally {
@@ -445,17 +417,15 @@ export default function KnowledgeSidebar() {
 
   useEffect(() => {
     fetchFiles();
-    fetchStats();
-    fetchServices();
-
+    fetchStatsCb();
+    fetchServicesCb();
     // Auto-refresh every 30 seconds
     const interval = setInterval(() => {
-      fetchStats();
-      fetchServices();
+      fetchStatsCb();
+      fetchServicesCb();
     }, 30000);
-
     return () => clearInterval(interval);
-  }, [fetchFiles, fetchStats, fetchServices]);
+  }, [fetchFiles, fetchStatsCb, fetchServicesCb]);
 
   return (
     <>
@@ -657,4 +627,4 @@ export default function KnowledgeSidebar() {
       </AlertDialog>
     </>
   );
-} 
+}

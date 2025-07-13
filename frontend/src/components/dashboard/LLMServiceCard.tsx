@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { fetchServices, fetchModels } from "@/lib/api/llm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,6 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 interface ModelInfo {
   id: string;
@@ -60,31 +60,19 @@ export function LLMServiceCard() {
   const fetchLLMData = async () => {
     try {
       setIsLoading(true);
-      
-      // Fetch services
-      const servicesResponse = await fetch(`${BACKEND_URL}/api/services`);
-      let servicesData = {};
-      if (servicesResponse.ok) {
-        servicesData = await servicesResponse.json();
-        setServices(servicesData);
-      }
-
-      // Fetch models
-      const modelsResponse = await fetch(`${BACKEND_URL}/api/models`);
-      if (modelsResponse.ok) {
-        const modelsData = await modelsResponse.json();
-        const modelsList = modelsData.all_models || [];
-        // Calculate stats
-        const servicesList = Object.values(servicesData || {}) as ServiceInfo[];
-        const stats: LLMStats = {
-          total_services: servicesList.length,
-          active_services: servicesList.filter(s => s.available).length,
-          total_models: modelsList.length,
-          available_models: modelsList.filter((m: ModelInfo) => m.available).length,
-          default_model: modelsList.find((m: ModelInfo) => m.is_default)?.name || 'None'
-        };
-        setStats(stats);
-      }
+      const servicesData = await fetchServices();
+      setServices(servicesData);
+      const modelsData = await fetchModels();
+      const modelsList = modelsData.all_models || [];
+      const servicesList = Object.values(servicesData || {}) as ServiceInfo[];
+      const stats: LLMStats = {
+        total_services: servicesList.length,
+        active_services: servicesList.filter(s => s.available).length,
+        total_models: modelsList.length,
+        available_models: modelsList.filter((m: ModelInfo) => m.available).length,
+        default_model: modelsList.find((m: ModelInfo) => m.is_default)?.name || 'None'
+      };
+      setStats(stats);
     } catch (error) {
       console.error("Error fetching LLM data:", error);
     } finally {

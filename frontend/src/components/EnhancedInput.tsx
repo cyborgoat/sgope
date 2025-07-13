@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
 import { X, Paperclip, AtSign, Send, Square, Sparkles, Loader2 } from 'lucide-react'
+import { generateFilename } from '@/lib/api/files'
 
 interface EnhancedInputProps {
   onSend: (
@@ -411,11 +412,8 @@ export default function EnhancedInput({ onSend, isLoading = false, isActionActiv
         })
       );
 
-      const response = await fetch('/api/generate-filename', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ previews: previews.join('\n\n') }),
-      });
+      // Fix: Only pass previews string to generateFilename, not fetch options
+      const response = await generateFilename(previews.join('\n\n'));
 
       if (!response.ok) {
         throw new Error('Failed to generate filename from backend.');
@@ -624,4 +622,4 @@ export default function EnhancedInput({ onSend, isLoading = false, isActionActiv
       </Dialog>
     </div>
   );
-} 
+}

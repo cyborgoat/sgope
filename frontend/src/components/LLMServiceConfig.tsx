@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { fetchServices, fetchModels, setDefaultModel as apiSetDefaultModel, removeService as apiRemoveService } from '@/lib/api/llm';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 import { useLLMStore } from "@/lib/llmStore";
@@ -92,22 +93,15 @@ export default function LLMServiceConfig() {
   const [openaiModelsInput, setOpenaiModels] = useState<string>('');
   const [testStatusMessage, setTestStatusMessage] = useState<string>('');
 
-  const fetchModels = useCallback(async () => {
+  const fetchModelsFromApi = useCallback(async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/models`);
-      if (response.ok) {
-        const data = await response.json();
-        setModels(data.all_models || []);
-        
-        // If selected model is not available, clear it
-        if (
-          selectedModel &&
-          !data.all_models.find((m: ModelInfo) => m.id === selectedModel)
-        ) {
-          setSelectedModel("");
-        }
-      } else {
-        console.error("Failed to fetch models");
+      const data = await import('@/lib/api/llm').then(mod => mod.fetchModels());
+      setModels(data.all_models || []);
+      if (
+        selectedModel &&
+        !data.all_models.find((m: ModelInfo) => m.id === selectedModel)
+      ) {
+        setSelectedModel("");
       }
     } catch (error) {
       console.error("Error fetching models:", error);
@@ -116,13 +110,10 @@ export default function LLMServiceConfig() {
     }
   }, [selectedModel, setSelectedModel]);
 
-  const fetchServices = async () => {
+  const fetchServicesCb = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/services`);
-      if (response.ok) {
-        const data = await response.json();
-        setServices(data);
-      }
+      const data = await fetchServices();
+      setServices(data);
     } catch (error) {
       console.error("Error fetching services:", error);
     }
@@ -234,21 +225,16 @@ export default function LLMServiceConfig() {
   const addService = async () => {
     try {
       const serviceId = editingServiceId || `${selectedServiceType}_${Date.now()}`;
+      // Always use selectedModels for models field
       const config: Record<string, string | string[]> = { 
         ...serviceConfig,
         models: Array.from(selectedModels)
       };
-      
-      if (selectedServiceType === "openai" && openaiModelsInput) {
-        config.models = openaiModelsInput.split(',').map(m => m.trim()).filter(Boolean);
-      }
-      
       if (editingServiceId) {
         await fetch(`${BACKEND_URL}/api/services/${editingServiceId}`, {
           method: "DELETE",
         });
       }
-      
       const response = await fetch(`${BACKEND_URL}/api/services/add`, {
         method: "POST",
         headers: {
@@ -260,14 +246,17 @@ export default function LLMServiceConfig() {
           config: config,
         }),
       });
-      
       const result = await response.json();
-      
       if (result.success) {
         setConfigDialogOpen(false);
         resetConfigForm();
-        await fetchModels();
-        await fetchServices();
+        // Immediately refresh services and models for UI update
+        const [servicesData, modelsData] = await Promise.all([
+          import('@/lib/api/llm').then(mod => mod.fetchServices()),
+          import('@/lib/api/llm').then(mod => mod.fetchModels())
+        ]);
+        setServices(servicesData);
+        setModels(modelsData.all_models || []);
       } else {
         setTestResult({
           success: false,
@@ -311,14 +300,14 @@ export default function LLMServiceConfig() {
 
   const removeService = async (serviceId: string) => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/services/${serviceId}`, {
-        method: "DELETE",
-      });
-      
-      if (response.ok) {
-        await fetchModels();
-        await fetchServices();
-      }
+      await apiRemoveService(serviceId);
+      // Immediately refresh services and models for UI update
+      const [servicesData, modelsData] = await Promise.all([
+        fetchServices(),
+        fetchModels()
+      ]);
+      setServices(servicesData);
+      setModels(modelsData.all_models || []);
     } catch (error) {
       console.error("Error removing service:", error);
     }
@@ -326,18 +315,11 @@ export default function LLMServiceConfig() {
 
   const setDefaultModel = async (modelId: string) => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/models/default`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ model: modelId }),
-      });
-      
-      if (response.ok) {
-        setSelectedModel(modelId);
-        await fetchModels();
-      }
+      await apiSetDefaultModel(modelId);
+      setSelectedModel(modelId);
+      // Immediately refresh models for UI update
+      const modelsData = await fetchModels();
+      setModels(modelsData.all_models || []);
     } catch (error) {
       console.error("Error setting default model:", error);
     }
@@ -380,8 +362,8 @@ export default function LLMServiceConfig() {
   };
 
   useEffect(() => {
-    fetchModels();
-    fetchServices();
+    fetchModelsFromApi();
+    fetchServicesCb();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
