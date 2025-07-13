@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
@@ -254,7 +254,7 @@ export default function HelpPage() {
             Need More Help?
           </CardTitle>
           <CardDescription>
-            Can't find what you're looking for? Get in touch with our support team.
+            Can&apos;t find what you&apos;re looking for? Get in touch with our support team.
           </CardDescription>
         </CardHeader>
         <CardContent>

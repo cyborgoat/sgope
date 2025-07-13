@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
-  Server, 
   RefreshCw, 
   Settings, 
   Circle,
@@ -48,7 +47,7 @@ interface LLMStats {
 
 export function LLMServiceCard() {
   const [services, setServices] = useState<Record<string, ServiceInfo>>({});
-  const [models, setModels] = useState<ModelInfo[]>([]);
+  // Removed unused models state to fix ESLint error. Use modelsList locally only.
   const [stats, setStats] = useState<LLMStats>({
     total_services: 0,
     active_services: 0,
@@ -75,8 +74,6 @@ export function LLMServiceCard() {
       if (modelsResponse.ok) {
         const modelsData = await modelsResponse.json();
         const modelsList = modelsData.all_models || [];
-        setModels(modelsList);
-        
         // Calculate stats
         const servicesList = Object.values(servicesData || {}) as ServiceInfo[];
         const stats: LLMStats = {

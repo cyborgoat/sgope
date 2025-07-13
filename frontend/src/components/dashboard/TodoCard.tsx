@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { 
   CheckSquare, 
   Plus, 
-  Clock,
   ChevronRight,
   Circle,
   CheckCircle
@@ -37,9 +36,9 @@ export function TodoCard() {
     if (storedTodos) {
       try {
         const parsed = JSON.parse(storedTodos);
-        const todosWithDates = parsed.map((todo: any) => ({
+        const todosWithDates = parsed.map((todo: Record<string, unknown>) => ({
           ...todo,
-          createdAt: new Date(todo.createdAt)
+          createdAt: typeof todo.createdAt === 'string' || typeof todo.createdAt === 'number' ? new Date(todo.createdAt) : new Date()
         }));
         setTodos(todosWithDates);
       } catch (error) {

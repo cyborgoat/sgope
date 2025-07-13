@@ -29,9 +29,7 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
-  Star,
-  Settings
-} from "lucide-react";
+  Star} from "lucide-react";
 
 interface ModelInfo {
   id: string;
@@ -384,7 +382,7 @@ export default function LLMServiceConfig() {
   useEffect(() => {
     fetchModels();
     fetchServices();
-  }, [fetchModels]);
+  }, [fetchModels, fetchServices]);
 
   if (loading) {
     return (
@@ -665,7 +663,7 @@ export default function LLMServiceConfig() {
         {/* Services List */}
         {Object.keys(services).length === 0 ? (
           <div className="text-muted-foreground text-sm text-center py-4">
-            No LLM services configured. Click "Add Service" to get started.
+            No LLM services configured. Click &quot;Add Service&quot; to get started.
           </div>
         ) : (
           <div className="space-y-2">

@@ -14,7 +14,6 @@ import {
   Brain, 
   RefreshCw,
   Search,
-  Filter,
   Calendar,
   Clock
 } from "lucide-react";
@@ -26,7 +25,7 @@ interface ActivityLog {
   details?: string;
   timestamp: Date;
   user?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export default function ActivityPage() {

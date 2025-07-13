@@ -32,7 +32,7 @@ function getInitialSelectedModel() {
   return '';
 }
 
-export const useLLMStore = create<LLMState>((set, get) => ({
+export const useLLMStore = create<LLMState>((set) => ({
   selectedModel: getInitialSelectedModel(),
   setSelectedModel: (model: string) => {
     set({ selectedModel: model });

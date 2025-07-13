@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,14 +10,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   CheckSquare, 
   Plus, 
   Trash2, 
   Edit, 
-  Filter,
   Calendar,
   Circle,
   CheckCircle,
@@ -63,11 +62,11 @@ export default function TasksPage() {
     if (storedTodos) {
       try {
         const parsed = JSON.parse(storedTodos);
-        const todosWithDates = parsed.map((todo: any) => ({
+        const todosWithDates = parsed.map((todo: Record<string, unknown>) => ({
           ...todo,
-          createdAt: new Date(todo.createdAt),
-          updatedAt: new Date(todo.updatedAt),
-          dueDate: todo.dueDate ? new Date(todo.dueDate) : undefined
+          createdAt: typeof todo.createdAt === 'string' || typeof todo.createdAt === 'number' ? new Date(todo.createdAt) : new Date(),
+          updatedAt: typeof todo.updatedAt === 'string' || typeof todo.updatedAt === 'number' ? new Date(todo.updatedAt) : new Date(),
+          dueDate: todo.dueDate && (typeof todo.dueDate === 'string' || typeof todo.dueDate === 'number') ? new Date(todo.dueDate) : undefined
         }));
         setTodos(todosWithDates);
       } catch (error) {

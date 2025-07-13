@@ -40,7 +40,7 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
-  Star,
+  // Star,
   Edit,
 } from "lucide-react";
 
@@ -467,23 +467,7 @@ export default function ModelSelector() {
     }
   };
 
-  const setDefaultModel = async (modelId: string) => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/models/default`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ model: modelId }),
-      });
 
-      if (response.ok) {
-        await fetchModels();
-      }
-    } catch (error) {
-      console.error("Error setting default model:", error);
-    }
-  };
 
   const resetConfigForm = () => {
     setServiceConfig({
