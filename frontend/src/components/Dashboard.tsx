@@ -30,11 +30,11 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      const data = await fetchStats() as any;
+      const data = await fetchStats();
       setStats({
         knowledge_files: data.short_term_memory?.files || 0,
         total_actions: data.long_term_memory?.total_actions || 0,
-        active_models: data.llm_services?.all_models?.length || 0,
+        active_models: Array.isArray(data.llm_services?.all_models) ? data.llm_services.all_models.length : 0,
         recent_chats: 5 // Placeholder - you can implement this endpoint
       });
       // Generate some mock recent activity

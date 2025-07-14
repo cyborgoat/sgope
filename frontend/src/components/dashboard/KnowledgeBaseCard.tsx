@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { fetchKnowledgeFiles, fetchKnowledgeFileContent } from "@/lib/api/knowledge";
+import { fetchKnowledgeFiles, fetchKnowledgeFileContent, KnowledgeFileContentResponse } from "@/lib/api/knowledge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,19 +17,9 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 
-interface FileItem {
-  id: string;
-  label: string;
-  description: string;
-  name?: string;
-  path?: string;
-  type?: 'file' | 'directory' | 'folder' | 'image';
-  metadata?: {
-    type?: string;
-    path?: string;
-    size?: number;
-  };
-}
+
+import type { FileItem } from '@/types';
+import type { KnowledgeFilesResponse } from '@/lib/api/knowledge';
 
 interface KnowledgeStats {
   total_files: number;
@@ -54,8 +44,8 @@ export function KnowledgeBaseCard() {
   const fetchKnowledgeData = async () => {
     try {
       setIsLoading(true);
-      const data = await fetchKnowledgeFiles();
-      const filesList = data.files || [];
+      const data: KnowledgeFilesResponse = await fetchKnowledgeFiles();
+      const filesList = Array.isArray(data.files) ? data.files : [];
       setFiles(filesList);
       const stats = filesList.reduce((acc: KnowledgeStats, file: FileItem) => {
         if (file.type === 'file') acc.total_files++;
@@ -75,7 +65,7 @@ export function KnowledgeBaseCard() {
     setSelectedFile(fileName);
     setIsLoadingContent(true);
     try {
-      const data = await fetchKnowledgeFileContent(filePath);
+      const data: KnowledgeFileContentResponse = await fetchKnowledgeFileContent(filePath);
       setFileContent(data.content || 'No content available');
     } catch (error) {
       console.error("Error fetching file content:", error);

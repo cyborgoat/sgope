@@ -10,8 +10,14 @@ export async function fetchFiles(query: string = '') {
   }
 }
 
-export async function generateFilename(previews: string) {
-  return apiRequest(`${BACKEND_URL}/api/generate-filename`, {
+
+export interface GenerateFilenameResponse {
+  ok: boolean;
+  filename?: string;
+}
+
+export async function generateFilename(previews: string): Promise<GenerateFilenameResponse> {
+  return apiRequest<GenerateFilenameResponse>(`${BACKEND_URL}/api/generate-filename`, {
     method: 'POST',
     body: JSON.stringify({ previews }),
   });

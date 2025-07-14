@@ -1,7 +1,9 @@
-import { BACKEND_URL, apiRequest } from './common';
 
-export async function fetchStats() {
-  return apiRequest(`${BACKEND_URL}/api/stats`);
+import { BACKEND_URL, apiRequest } from './common';
+import type { SystemStats } from '@/types';
+
+export async function fetchStats(): Promise<SystemStats> {
+  return apiRequest<SystemStats>(`${BACKEND_URL}/api/stats`);
 }
 
 export async function refreshKnowledge() {

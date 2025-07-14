@@ -1,12 +1,23 @@
-import { BACKEND_URL, apiRequest, buildQueryString } from './common';
 
-export async function fetchKnowledgeFiles() {
-  return apiRequest(`${BACKEND_URL}/api/files`);
+
+import { BACKEND_URL, apiRequest, buildQueryString } from './common';
+import type { FileItem } from '@/types';
+
+export interface KnowledgeFilesResponse {
+  files: FileItem[];
 }
 
-export async function fetchKnowledgeFileContent(path: string) {
+export async function fetchKnowledgeFiles(): Promise<KnowledgeFilesResponse> {
+  return apiRequest<KnowledgeFilesResponse>(`${BACKEND_URL}/api/files`);
+}
+
+export interface KnowledgeFileContentResponse {
+  content: string;
+}
+
+export async function fetchKnowledgeFileContent(path: string): Promise<KnowledgeFileContentResponse> {
   const queryString = buildQueryString({ path });
-  return apiRequest(`${BACKEND_URL}/api/files/content?${queryString}`);
+  return apiRequest<KnowledgeFileContentResponse>(`${BACKEND_URL}/api/files/content?${queryString}`);
 }
 
 export async function saveKnowledgeFileContent(path: string, content: string) {
