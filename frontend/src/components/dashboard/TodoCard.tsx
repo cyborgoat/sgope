@@ -15,14 +15,7 @@ import {
   CheckCircle
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-
-interface TodoItem {
-  id: string;
-  title: string;
-  completed: boolean;
-  createdAt: Date;
-  priority: "low" | "medium" | "high";
-}
+import { TodoItem } from "@/types";
 
 const TODO_STORAGE_KEY = "sgope-todos";
 

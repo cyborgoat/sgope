@@ -12,19 +12,7 @@ import {
   accumulateStreamingContent,
 } from "@/lib/textUtils";
 import { streamChat, stopChatStream } from "@/lib/api/chat";
-
-interface Message {
-  id: string;
-  content: string;
-  role: "user" | "assistant" | "system";
-  timestamp: Date;
-  attachments?: Array<{
-    type: "file" | "image";
-    name: string;
-    url?: string;
-  }>;
-  thinkingProcess?: string;
-}
+import { Message } from "@/types";
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);

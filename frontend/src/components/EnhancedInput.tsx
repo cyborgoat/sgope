@@ -21,30 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { X, Paperclip, AtSign, Send, Square, Sparkles, Loader2 } from 'lucide-react'
 import { generateFilename } from '@/lib/api/files'
-
-interface EnhancedInputProps {
-  onSend: (
-    message: string, 
-    attachments?: Array<{type: 'file' | 'image', name: string, url?: string}>, 
-    selectedAction?: string,
-    options?: { knowledgeFilename?: string }
-  ) => void
-  isLoading?: boolean
-  isActionActive?: boolean
-  onStop?: () => void
-}
-
-interface SuggestionItem {
-  id: string
-  label: string
-  description?: string
-}
-
-interface AttachmentItem {
-  type: 'file' | 'image'
-  name: string
-  url?: string
-}
+import { EnhancedInputProps, SuggestionItem, AttachmentItem } from '@/types';
 
 // Fetch suggestions from backend using client-side API fetchers
 import { fetchFiles } from '@/lib/api/files';

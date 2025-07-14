@@ -3,16 +3,7 @@
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-
-interface AutocompleteInputProps {
-  onSend: (message: string) => void;
-}
-
-interface SuggestionItem {
-  id: string;
-  label: string;
-  description?: string;
-}
+import { AutocompleteInputProps, SuggestionItem } from "@/types";
 
 import { fetchFiles } from '@/lib/api/files';
 import { fetchActions } from '@/lib/api/actions';

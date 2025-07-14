@@ -43,37 +43,7 @@ import {
   // Star,
   Edit,
 } from "lucide-react";
-
-interface ModelInfo {
-  id: string;
-  name: string;
-  provider: string;
-  service: string;
-  service_type: string;
-  available: boolean;
-  is_default: boolean;
-}
-
-interface ServiceInfo {
-  id: string;
-  type: string;
-  name: string;
-  enabled: boolean;
-  available: boolean;
-  models: string[];
-  status: string;
-  config: Record<string, string | boolean | string[]>;
-}
-
-// No props needed, use global store
-
-interface ServiceConfig {
-  name: string;
-  host?: string;
-  api_key?: string;
-  base_url?: string;
-  models?: string[];
-}
+import { ModelInfo, ServiceInfo, ServiceConfig } from "@/types";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";

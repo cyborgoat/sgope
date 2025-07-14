@@ -14,36 +14,7 @@ import {
   Brain
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-
-interface ModelInfo {
-  id: string;
-  name: string;
-  provider: string;
-  service: string;
-  service_type: string;
-  available: boolean;
-  is_default: boolean;
-}
-
-interface ServiceInfo {
-  id: string;
-  type: string;
-  name: string;
-  enabled: boolean;
-  available: boolean;
-  models: string[];
-  status: string;
-  config: Record<string, string | boolean | string[]>;
-}
-
-interface LLMStats {
-  total_services: number;
-  active_services: number;
-  total_models: number;
-  available_models: number;
-  default_model: string;
-}
+import { ModelInfo, ServiceInfo, LLMStats } from "@/types";
 
 export function LLMServiceCard() {
   const [services, setServices] = useState<Record<string, ServiceInfo>>({});

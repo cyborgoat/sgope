@@ -17,11 +17,7 @@ import {
   HelpCircle,
   Activity
 } from "lucide-react";
-
-interface SidebarProps {
-  className?: string;
-  isCollapsed?: boolean;
-}
+import { SidebarProps, AppLayoutProps } from "@/types";
 
 const navigation = [
   {
@@ -125,10 +121,6 @@ function SidebarContent({ className, isCollapsed }: SidebarProps) {
       </div>
     </div>
   );
-}
-
-interface AppLayoutProps {
-  children: React.ReactNode;
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {

@@ -22,59 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetchKnowledgeFiles, fetchKnowledgeFileContent, saveKnowledgeFileContent } from '@/lib/api/knowledge';
 import { fetchStats, refreshKnowledge as apiRefreshKnowledge } from '@/lib/api/stats';
 import { fetchServices } from '@/lib/api/llm';
-
-interface FileItem {
-  id: string;
-  label: string;
-  description: string;
-  name?: string;
-  path?: string;
-  type?: 'file' | 'directory' | 'folder' | 'image';
-  children?: FileItem[];
-  metadata?: {
-    type?: string;
-    path?: string;
-    size?: number;
-  };
-}
-
-interface SystemStats {
-  short_term_memory: {
-    total_items: number;
-    files: number;
-    folders: number;
-    images: number;
-  };
-  long_term_memory: {
-    total_actions: number;
-  };
-  llm_services: {
-    default_model: string;
-    all_models: unknown[];
-    services: Record<string, {
-      available: boolean;
-      status: string;
-      models: string[];
-    }>;
-  };
-}
-
-interface ServiceInfo {
-  id: string;
-  name: string;
-  type: string;
-  available: boolean;
-  status: string;
-  models?: string[];
-}
-
-interface TreeNode {
-  name: string;
-  path: string;
-  type: 'file' | 'folder';
-  children?: TreeNode[];
-  size?: number;
-}
+import { FileItem, SystemStats, ServiceInfo, TreeNode } from '@/types';
 
 export default function KnowledgeSidebar() {
   const [fileTree, setFileTree] = useState<TreeNode[]>([]);

@@ -13,17 +13,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-interface RecentActivity {
-  id: string;
-  type: "chat" | "file_upload" | "action" | "model_change";
-  description: string;
-  timestamp: Date;
-}
-
-interface RecentActivityCardProps {
-  activities: RecentActivity[];
-}
+import { RecentActivityCardProps } from "@/types";
 
 export function RecentActivityCard({ activities }: RecentActivityCardProps) {
   const getActivityIcon = (type: string) => {

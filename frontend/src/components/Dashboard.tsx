@@ -15,21 +15,7 @@ import { KnowledgeBaseCard } from "./dashboard/KnowledgeBaseCard";
 import { LLMServiceCard } from "./dashboard/LLMServiceCard";
 import { TodoCard } from "./dashboard/TodoCard";
 import { RecentActivityCard } from "./dashboard/RecentActivityCard";
-
-
-interface DashboardStats {
-  knowledge_files: number;
-  total_actions: number;
-  active_models: number;
-  recent_chats: number;
-}
-
-interface RecentActivity {
-  id: string;
-  type: "chat" | "file_upload" | "action" | "model_change";
-  description: string;
-  timestamp: Date;
-}
+import { DashboardStats, RecentActivity } from "@/types";
 
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({

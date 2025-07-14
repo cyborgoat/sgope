@@ -31,35 +31,7 @@ import {
   CheckCircle,
   AlertCircle,
   Star} from "lucide-react";
-
-interface ModelInfo {
-  id: string;
-  name: string;
-  provider: string;
-  service: string;
-  service_type: string;
-  available: boolean;
-  is_default: boolean;
-}
-
-interface ServiceInfo {
-  id: string;
-  type: string;
-  name: string;
-  enabled: boolean;
-  available: boolean;
-  models: string[];
-  status: string;
-  config: Record<string, string | boolean | string[]>;
-}
-
-interface ServiceConfig {
-  name: string;
-  host?: string;
-  api_key?: string;
-  base_url?: string;
-  models?: string[];
-}
+import { ModelInfo, ServiceInfo, ServiceConfig } from "@/types";
 
 export default function LLMServiceConfig() {
   const selectedModel = useLLMStore((state) => state.selectedModel);
