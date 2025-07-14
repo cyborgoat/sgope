@@ -1,9 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { fetchServices, fetchModels, setDefaultModel as apiSetDefaultModel, removeService as apiRemoveService } from '@/lib/api/llm';
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+import { 
+  fetchServices, 
+  fetchModels, 
+  setDefaultModel as apiSetDefaultModel, 
+  removeService as apiRemoveService, 
+  testService as apiTestService, 
+  addService as apiAddService, 
+  // updateService as apiUpdateService (removed unused import)
+} from '@/lib/api/llm';
 import { useLLMStore } from "@/lib/llmStore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -108,19 +114,7 @@ export default function LLMServiceConfig() {
       }
       
       setTestStatusMessage('Sending test request...');
-      const response = await fetch(`${BACKEND_URL}/api/services/test`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          service_type: selectedServiceType,
-          config: config,
-        }),
-        signal: abortController.signal,
-      });
-      
-      const result = await response.json();
+      const result = await apiTestService(selectedServiceType, config, abortController.signal);
       
       if (result.success && result.available) {
         setTestResult({
@@ -203,38 +197,20 @@ export default function LLMServiceConfig() {
         models: Array.from(selectedModels)
       };
       if (editingServiceId) {
-        await fetch(`${BACKEND_URL}/api/services/${editingServiceId}`, {
-          method: "DELETE",
-        });
+        await apiRemoveService(editingServiceId);
       }
-      const response = await fetch(`${BACKEND_URL}/api/services/add`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          service_id: serviceId,
-          service_type: selectedServiceType,
-          config: config,
-        }),
-      });
-      const result = await response.json();
-      if (result.success) {
-        setConfigDialogOpen(false);
-        resetConfigForm();
-        // Immediately refresh services and models for UI update
-        const [servicesData, modelsData] = await Promise.all([
-          import('@/lib/api/llm').then(mod => mod.fetchServices()),
-          import('@/lib/api/llm').then(mod => mod.fetchModels())
-        ]);
-        setServices(servicesData);
-        setModels(modelsData.all_models || []);
-      } else {
-        setTestResult({
-          success: false,
-          message: result.error || "Failed to save service",
-        });
-      }
+      
+      await apiAddService(serviceId, selectedServiceType, config);
+      
+      setConfigDialogOpen(false);
+      resetConfigForm();
+      // Immediately refresh services and models for UI update
+      const [servicesData, modelsData] = await Promise.all([
+        fetchServices(),
+        fetchModels()
+      ]);
+      setServices(servicesData);
+      setModels(modelsData.all_models || []);
     } catch (error) {
       setTestResult({
         success: false,

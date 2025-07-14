@@ -39,3 +39,25 @@ export interface LLMStats {
   available_models: number;
   default_model: string;
 }
+
+// API Response Types
+export interface ModelsResponse {
+  all_models: ModelInfo[];
+  default_model: string;
+  services: Record<string, {
+    status: string;
+    models: string[];
+  }>;
+}
+
+export interface ServicesResponse {
+  [key: string]: ServiceInfo;
+}
+
+export interface TestServiceResponse {
+  success: boolean;
+  available: boolean;
+  message?: string;
+  models?: string[];
+  error?: string;
+}

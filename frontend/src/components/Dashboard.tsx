@@ -30,7 +30,7 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      const data = await fetchStats();
+      const data = await fetchStats() as any;
       setStats({
         knowledge_files: data.short_term_memory?.files || 0,
         total_actions: data.long_term_memory?.total_actions || 0,

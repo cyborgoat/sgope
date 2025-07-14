@@ -1,37 +1,61 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+import { BACKEND_URL, apiRequest } from './common';
+import { ModelsResponse, ServicesResponse, TestServiceResponse } from '@/types';
 
-export async function fetchServices() {
-  const response = await fetch(`${BACKEND_URL}/api/services`);
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-  return await response.json();
+export async function fetchServices(): Promise<ServicesResponse> {
+  return apiRequest<ServicesResponse>(`${BACKEND_URL}/api/services`);
 }
 
-export async function fetchModels() {
-  const response = await fetch(`${BACKEND_URL}/api/models`);
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-  return await response.json();
+export async function fetchModels(): Promise<ModelsResponse> {
+  return apiRequest<ModelsResponse>(`${BACKEND_URL}/api/models`);
 }
 
-export async function removeService(serviceId: string) {
-  const response = await fetch(`${BACKEND_URL}/api/services/${serviceId}`, {
+export async function removeService(serviceId: string): Promise<void> {
+  return apiRequest<void>(`${BACKEND_URL}/api/services/${serviceId}`, {
     method: "DELETE",
   });
-  if (!response.ok) {
-    throw new Error("Failed to remove service");
-  }
-  return response.json();
 }
 
-export async function setDefaultModel(modelId: string) {
-  const response = await fetch(`${BACKEND_URL}/api/models/default`, {
+export async function setDefaultModel(modelId: string): Promise<void> {
+  return apiRequest<void>(`${BACKEND_URL}/api/models/default`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({ model: modelId }),
   });
-  if (!response.ok) {
-    throw new Error("Failed to set default model");
-  }
-  return response.json();
+}
+
+export async function refreshModels(): Promise<void> {
+  return apiRequest<void>(`${BACKEND_URL}/api/models/refresh`, {
+    method: "POST",
+  });
+}
+
+export async function testService(serviceType: string, config: Record<string, string | boolean | string[]>, signal?: AbortSignal): Promise<TestServiceResponse> {
+  return apiRequest<TestServiceResponse>(`${BACKEND_URL}/api/services/test`, {
+    method: "POST",
+    body: JSON.stringify({
+      service_type: serviceType,
+      config: config,
+    }),
+    signal,
+  });
+}
+
+export async function addService(serviceId: string, serviceType: string, config: Record<string, string | boolean | string[]>): Promise<void> {
+  return apiRequest<void>(`${BACKEND_URL}/api/services/add`, {
+    method: "POST",
+    body: JSON.stringify({
+      service_id: serviceId,
+      service_type: serviceType,
+      config: config,
+    }),
+  });
+}
+
+export async function updateService(serviceId: string, serviceType: string, config: Record<string, string | boolean | string[]>): Promise<void> {
+  return apiRequest<void>(`${BACKEND_URL}/api/services/${serviceId}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      service_type: serviceType,
+      config: config,
+    }),
+  });
 }

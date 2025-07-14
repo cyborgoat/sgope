@@ -1,13 +1,9 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+import { BACKEND_URL, apiRequest } from './common';
 
 export async function fetchStats() {
-  const response = await fetch(`${BACKEND_URL}/api/stats`);
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-  return await response.json();
+  return apiRequest(`${BACKEND_URL}/api/stats`);
 }
 
 export async function refreshKnowledge() {
-  const response = await fetch(`${BACKEND_URL}/api/refresh`, { method: 'POST' });
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-  return await response.json();
+  return apiRequest(`${BACKEND_URL}/api/refresh`, { method: 'POST' });
 }

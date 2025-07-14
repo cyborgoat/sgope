@@ -1,7 +1,4 @@
-// src/lib/api/chat.ts
-// Centralized chat API logic for streaming and stopping chat
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+import { BACKEND_URL, fetchWithTimeout } from './common';
 
 export async function streamChat({
   content,
@@ -20,7 +17,7 @@ export async function streamChat({
 }) {
   // Prepare attachments for backend
   const processedAttachments = attachments || [];
-  const response = await fetch(`${BACKEND_URL}/api/chat/stream`, {
+  return fetchWithTimeout(`${BACKEND_URL}/api/chat/stream`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -34,16 +31,14 @@ export async function streamChat({
       knowledge_filename: knowledgeFilename,
     }),
   });
-  return response;
 }
 
 export async function stopChatStream(streamId: string) {
-  const response = await fetch(`${BACKEND_URL}/api/chat/stop`, {
+  return fetchWithTimeout(`${BACKEND_URL}/api/chat/stop`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ stream_id: streamId }),
   });
-  return response;
 }

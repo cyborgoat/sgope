@@ -44,9 +44,16 @@ import {
   Edit,
 } from "lucide-react";
 import { ModelInfo, ServiceInfo, ServiceConfig } from "@/types";
+import { 
+  fetchServices, 
+  fetchModels, 
+  refreshModels as apiRefreshModels, 
+  testService as apiTestService, 
+  addService as apiAddService, 
+  // updateService as apiUpdateService, (removed unused import)
+  removeService as apiRemoveService 
+} from '@/lib/api/llm';
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 // Use Zustand store for selectedModel and services
 export default function ModelSelector() {
   const selectedModel = useLLMStore((state) => state.selectedModel);
@@ -96,22 +103,17 @@ export default function ModelSelector() {
   // Test status message
   const [testStatusMessage, setTestStatusMessage] = useState<string>("");
 
-  const fetchModels = useCallback(async () => {
+  const fetchModelsWrapper = useCallback(async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/models`);
-      if (response.ok) {
-        const data = await response.json();
-        setModels(data.all_models || []);
+      const data = await fetchModels();
+      setModels(data.all_models || []);
 
-        // If selected model is not available, clear it
-        if (
-          selectedModel &&
-          !data.all_models.find((m: ModelInfo) => m.id === selectedModel)
-        ) {
-          setSelectedModel("");
-        }
-      } else {
-        console.error("Failed to fetch models");
+      // If selected model is not available, clear it
+      if (
+        selectedModel &&
+        !data.all_models.find((m: ModelInfo) => m.id === selectedModel)
+      ) {
+        setSelectedModel("");
       }
     } catch (error) {
       console.error("Error fetching models:", error);
@@ -120,13 +122,10 @@ export default function ModelSelector() {
     }
   }, [selectedModel, setSelectedModel]);
 
-  const fetchServices = async () => {
+  const fetchServicesWrapper = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/services`);
-      if (response.ok) {
-        const data = await response.json();
-        setServices(data);
-      }
+      const data = await fetchServices();
+      setServices(data);
     } catch (error) {
       console.error("Error fetching services:", error);
     }
@@ -135,13 +134,9 @@ export default function ModelSelector() {
   const refreshModels = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/models/refresh`, {
-        method: "POST",
-      });
-      if (response.ok) {
-        await fetchModels();
-        await fetchServices();
-      }
+      await apiRefreshModels();
+      await fetchModelsWrapper();
+      await fetchServicesWrapper();
     } catch (error) {
       console.error("Error refreshing models:", error);
     } finally {
@@ -149,7 +144,7 @@ export default function ModelSelector() {
     }
   };
 
-  const testService = async () => {
+  const testServiceWrapper = async () => {
     setTesting(true);
     setTestResult({ success: false });
     setDiscoveredModels([]);
@@ -170,19 +165,8 @@ export default function ModelSelector() {
           .filter(Boolean);
       }
       setTestStatusMessage("Sending test request...");
-      const response = await fetch(`${BACKEND_URL}/api/services/test`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          service_type: selectedServiceType,
-          config: config,
-        }),
-        signal: abortController.signal, // Add abort signal
-      });
-
-      const result = await response.json();
+      
+      const result = await apiTestService(selectedServiceType, config, abortController.signal);
 
       if (result.success && result.available) {
         setTestResult({
@@ -283,39 +267,22 @@ export default function ModelSelector() {
         ...serviceConfig,
         models: Array.from(selectedModels),
       };
+      
       if (editingServiceId) {
-        await fetch(`${BACKEND_URL}/api/services/${editingServiceId}`, {
-          method: "DELETE",
-        });
+        await apiRemoveService(editingServiceId);
       }
-      const response = await fetch(`${BACKEND_URL}/api/services/add`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          service_id: serviceId,
-          service_type: selectedServiceType,
-          config: config,
-        }),
-      });
-      const result = await response.json();
-      if (result.success) {
-        setConfigDialogOpen(false);
-        resetConfigForm();
-        // Immediately refresh services and models for UI update
-        const [servicesData, modelsData] = await Promise.all([
-          import('@/lib/api/llm').then(mod => mod.fetchServices()),
-          import('@/lib/api/llm').then(mod => mod.fetchModels())
-        ]);
-        setServices(servicesData);
-        setModels(modelsData.all_models || []);
-      } else {
-        setTestResult({
-          success: false,
-          message: result.error || "Failed to save service",
-        });
-      }
+      
+      await apiAddService(serviceId, selectedServiceType, config);
+      
+      setConfigDialogOpen(false);
+      resetConfigForm();
+      // Immediately refresh services and models for UI update
+      const [servicesData, modelsData] = await Promise.all([
+        fetchServices(),
+        fetchModels()
+      ]);
+      setServices(servicesData);
+      setModels(modelsData.all_models || []);
     } catch (error) {
       setTestResult({
         success: false,
@@ -334,18 +301,7 @@ export default function ModelSelector() {
     setRefreshingServices((prev) => new Set(prev).add(service.id));
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/services/test`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          service_type: "ollama",
-          config: config,
-        }),
-      });
-
-      const result = await response.json();
+      const result = await apiTestService("ollama", config);
 
       if (result.success && result.available) {
         // Set up for editing with new models
@@ -426,18 +382,14 @@ export default function ModelSelector() {
   const removeService = async (serviceId: string) => {
     setDeletingServices((prev) => new Set(prev).add(serviceId));
     try {
-      const response = await fetch(`${BACKEND_URL}/api/services/${serviceId}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        // Immediately refresh services and models for UI update
-        const [servicesData, modelsData] = await Promise.all([
-          import('@/lib/api/llm').then(mod => mod.fetchServices()),
-          import('@/lib/api/llm').then(mod => mod.fetchModels())
-        ]);
-        setServices(servicesData);
-        setModels(modelsData.all_models || []);
-      }
+      await apiRemoveService(serviceId);
+      // Immediately refresh services and models for UI update
+      const [servicesData, modelsData] = await Promise.all([
+        fetchServices(),
+        fetchModels()
+      ]);
+      setServices(servicesData);
+      setModels(modelsData.all_models || []);
     } catch (error) {
       console.error("Error removing service:", error);
     } finally {
@@ -477,8 +429,8 @@ export default function ModelSelector() {
 
   // Only fetch models/services on mount, not after every fetchModels change
   useEffect(() => {
-    fetchModels();
-    fetchServices();
+    fetchModelsWrapper();
+    fetchServicesWrapper();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -904,7 +856,7 @@ export default function ModelSelector() {
                     {!testing ? (
                       <Button
                         type="button"
-                        onClick={testService}
+                        onClick={testServiceWrapper}
                         disabled={!serviceConfig.name}
                         className="w-full"
                         variant="outline"
