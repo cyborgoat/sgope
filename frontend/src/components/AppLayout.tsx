@@ -129,7 +129,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Always show sidebar for all pages, including chat
 
   return (
-    <div className="grid h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+    <div className="grid h-screen w-full md:grid-cols-[160px_1fr] lg:grid-cols-[200px_1fr]">
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetTrigger asChild>
@@ -141,7 +141,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent className="w-[280px] p-0">
+        <SheetContent className="w-[200px] p-0">
           <VisuallyHidden>
             <SheetTitle>Navigation Menu</SheetTitle>
           </VisuallyHidden>

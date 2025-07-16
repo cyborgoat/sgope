@@ -4,8 +4,12 @@ from typing import Dict, Any, List
 
 from sgope.llm import llm_manager
 from sgope.memory import action_handler, knowledge_file_handler
+from sgope.mcp_bridge import router as mcp_router
 
 router = APIRouter()
+
+# Include MCP task management routes
+router.include_router(mcp_router, prefix="/api/v1")
 
 
 class FilenameRequest(BaseModel):

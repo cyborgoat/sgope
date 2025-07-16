@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sgope.server.routes import router
 from sgope.server.sse import sse_router
 from sgope.server.websocket import websocket_router
+from sgope.mcp_bridge import router as mcp_router
 
 
 def create_app() -> FastAPI:
@@ -27,5 +28,6 @@ def create_app() -> FastAPI:
     app.include_router(router, prefix="/api")
     app.include_router(websocket_router)
     app.include_router(sse_router, prefix="/api")
+    app.include_router(mcp_router, prefix="/api/mcp")
     
     return app

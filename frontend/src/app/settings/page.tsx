@@ -200,6 +200,18 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="database-path">Database Path</Label>
+              <Input
+                id="database-path"
+                placeholder="~/Library/Application Support/sgope/tasks.db"
+                defaultValue="~/Library/Application Support/sgope/tasks.db"
+              />
+              <p className="text-xs text-muted-foreground">
+                Default: ~/Library/Application Support/sgope (macOS)<br />
+                %AppData%/sgope (Windows)
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label>Storage usage</Label>
               <div className="text-sm text-muted-foreground">
                 Knowledge base: ~2.4 MB<br />
